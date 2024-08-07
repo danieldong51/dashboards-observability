@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { HashRouter, RouteComponentProps, Switch, Route } from 'react-router-dom';
 import {
   EuiText,
@@ -17,8 +17,6 @@ import {
   EuiPanel,
   EuiFlexGroup,
   EuiFlexItem,
-  EuiSuperDatePicker,
-  EuiButtonIcon,
 } from '@elastic/eui';
 import moment from 'moment';
 import { TraceAnalyticsCoreDeps } from '../trace_analytics/home';
@@ -26,7 +24,10 @@ import { ChromeBreadcrumb } from '../../../../../src/core/public';
 import { coreRefs } from '../../framework/core_refs';
 import { ContentManagementPluginStart } from '../../../../../src/plugins/content_management/public';
 import { HOME_CONTENT_AREAS, HOME_PAGE_ID } from '../../plugin_helpers/plugin_overview';
-import { cardConfigs, GettingStartedConfig } from './card_configs';
+import { cardConfigs, GettingStartedConfig } from './components/card_configs';
+import { DatePicker } from './components/date_picker';
+import { AddDashboardCallout } from './components/add_dashboard_callout';
+import { uiSettingsService } from '../../../common/utils';
 
 // Plugin IDs
 const alertsPluginID = 'alerting';
@@ -89,88 +90,79 @@ const registerCards = async () => {
       return true;
     })
     .forEach((card: GettingStartedConfig) => {
-      coreRefs.contentManagement?.registerContentProvider({
-        id: card.id,
-        getContent: () => ({
+      try {
+        coreRefs.contentManagement?.registerContentProvider({
           id: card.id,
-          kind: 'card',
-          order: card.order,
-          description: card.description,
-          title: card.title,
-          onClick: () => navigateToApp(card.url, '#/'),
-          getIcon: () => {},
-          getFooter: () => {
-            return (
-              <EuiText size="s" textAlign="left">
-                {card.footer}
-              </EuiText>
-            );
-          },
-        }),
-        getTargetArea: () => HOME_CONTENT_AREAS.GET_STARTED,
-      });
+          getContent: () => ({
+            id: card.id,
+            kind: 'card',
+            order: card.order,
+            description: card.description,
+            title: card.title,
+            onClick: () => navigateToApp(card.url, '#/'),
+            getIcon: () => {},
+            getFooter: () => {
+              return (
+                <EuiText size="s" textAlign="left">
+                  {card.footer}
+                </EuiText>
+              );
+            },
+          }),
+          getTargetArea: () => HOME_CONTENT_AREAS.GET_STARTED,
+        });
+      } catch (e) {
+        console.log(e);
+      }
     });
 };
 
-let showModal;
-let closeModal;
-let dashboardSelected;
-let setDashboardSelected;
-let startDate;
-let setStartDate;
+interface Props {
+  dashboardSelected: boolean;
+  startDate: string;
+  setStartDate: (start: string) => void;
+  showModal: () => void;
+}
 
-coreRefs.contentManagement?.registerContentProvider({
-  id: 'custom_content',
-  getContent: () => ({
-    id: 'custom_content',
-    kind: 'custom',
-    order: 1500,
-    render: () => (
-      <EuiPanel paddingSize="m" hasShadow={false} hasBorder>
-        <EuiAccordion
-          id="accordion1"
-          buttonContent={
-            <EuiText>
-              <h3>Select Dashboard</h3>
-            </EuiText>
-          }
-          paddingSize="m"
-          initialIsOpen={true}
-        >
-          {dashboardSelected ? (
-            <EuiFlexGroup gutterSize="s" alignItems="center">
-              <EuiFlexItem grow={false}>
-                <EuiSuperDatePicker
-                  start={startDate}
-                  end={startDate}
-                  onTimeChange={({ start }) => {
-                    setStartDate(start);
-                  }}
+const registerSelect = ({ dashboardSelected, startDate, setStartDate, showModal }: Props) => {
+  try {
+    coreRefs.contentManagement?.registerContentProvider({
+      id: 'custom_content',
+      getContent: () => ({
+        id: 'custom_content',
+        kind: 'custom',
+        order: 1500,
+        render: () => (
+          <EuiPanel paddingSize="m" hasShadow={false} hasBorder>
+            <EuiAccordion
+              id="accordion1"
+              buttonContent={
+                <EuiText>
+                  <h3>Select Dashboard</h3>
+                </EuiText>
+              }
+              paddingSize="m"
+              initialIsOpen={true}
+            >
+              {dashboardSelected ? (
+                <DatePicker
+                  startDate={startDate}
+                  setStartDate={setStartDate}
+                  showModal={showModal}
                 />
-              </EuiFlexItem>
-              <EuiFlexItem grow={false}>
-                <EuiButtonIcon
-                  iconType="gear"
-                  aria-label="Dashboard"
-                  color="success"
-                  onClick={showModal}
-                />
-              </EuiFlexItem>
-            </EuiFlexGroup>
-          ) : (
-            <>
-              <EuiText>
-                <p>Please select your observability overview dashboard.</p>
-              </EuiText>
-              <EuiButton onClick={showModal}>Add</EuiButton>
-            </>
-          )}
-        </EuiAccordion>
-      </EuiPanel>
-    ),
-  }),
-  getTargetArea: () => HOME_CONTENT_AREAS.SELECTOR,
-});
+              ) : (
+                <AddDashboardCallout showModal={showModal} />
+              )}
+            </EuiAccordion>
+          </EuiPanel>
+        ),
+      }),
+      getTargetArea: () => HOME_CONTENT_AREAS.SELECTOR,
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
 
 export const Home = ({ ..._props }: HomeProps) => {
   const homepage = coreRefs.contentManagement?.renderPage(HOME_PAGE_ID);
@@ -182,11 +174,13 @@ export const Home = ({ ..._props }: HomeProps) => {
   const [dashboardIds, setDashboardIds] = useState<Array<{ value: string; label: string }>>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOptionsState, setSelectedOptionsState] = useState([]);
-  [dashboardSelected, setDashboardSelected] = useState(false);
-  [startDate, setStartDate] = useState(moment().toISOString());
+  const [dashboardSelected, setDashboardSelected] = useState(false);
+  const [startDate, setStartDate] = useState(moment().toISOString());
 
-  showModal = () => setIsModalVisible(true);
-  closeModal = () => setIsModalVisible(false);
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+  const closeModal = () => setIsModalVisible(false);
 
   const onComboBoxChange = (options) => {
     setSelectedOptionsState(options);
@@ -195,6 +189,7 @@ export const Home = ({ ..._props }: HomeProps) => {
   const onClickAdd = () => {
     if (selectedOptionsState.length > 0) {
       registerDashboard(selectedOptionsState[0].value);
+      uiSettingsService.set('observability:defaultDashboard', selectedOptionsState[0].value);
       setDashboardSelected(true);
     }
     closeModal();
@@ -216,8 +211,28 @@ export const Home = ({ ..._props }: HomeProps) => {
     });
   };
 
+  const id = uiSettingsService.get('observability:defaultDashboard');
+  if (id) {
+    registerDashboard(id);
+  }
+
+  const hasRegisteredCards = useRef(false);
+  const hasRegisteredSelect = useRef(false);
+
   useEffect(() => {
-    registerCards();
+    if (!hasRegisteredCards.current) {
+      registerCards();
+      hasRegisteredCards.current = true;
+    }
+    if (!hasRegisteredSelect.current) {
+      registerSelect({
+        dashboardSelected,
+        startDate,
+        setStartDate,
+        showModal,
+      });
+      hasRegisteredSelect.current = true;
+    }
   }, []);
 
   useEffect(() => {

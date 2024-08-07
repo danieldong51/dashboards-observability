@@ -179,7 +179,7 @@ export class ObservabilityPlugin
   }
 
   public setup(
-    core: CoreSetup<AppPluginStartDependencies>, 
+    core: CoreSetup<AppPluginStartDependencies>,
     setupDeps: SetupDependencies
   ): ObservabilitySetup {
     uiSettingsService.init(core.uiSettings, core.notifications);
@@ -433,10 +433,7 @@ export class ObservabilityPlugin
     return {};
   }
 
-  public start(
-    core: CoreStart, 
-    startDeps: AppPluginStartDependencies
-  ): ObservabilityStart {
+  public start(core: CoreStart, startDeps: AppPluginStartDependencies): ObservabilityStart {
     const pplService: PPLService = new PPLService(core.http);
     const dslService = new DSLService(core.http);
 
@@ -458,7 +455,7 @@ export class ObservabilityPlugin
 
     const { dataSourceService, dataSourceFactory } = startDeps.data.dataSources;
     dataSourceFactory.registerDataSourceType(S3_DATA_SOURCE_TYPE, S3DataSource);
-    
+
     const getDataSourceTypeLabel = (type: string) => {
       if (type === DATA_SOURCE_TYPES.S3Glue) return S3_DATA_SOURCE_GROUP_DISPLAY_NAME;
       if (type === DATA_SOURCE_TYPES.SPARK) return S3_DATA_SOURCE_GROUP_SPARK_DISPLAY_NAME;
