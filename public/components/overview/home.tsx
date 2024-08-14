@@ -15,7 +15,7 @@ import { cardConfigs, GettingStartedConfig } from './components/card_configs';
 import { uiSettingsService } from '../../../common/utils';
 import { AddDashboardCallout } from './components/add_dashboard_callout';
 import { DashboardControls } from './components/dashboard_controls';
-import { SelectDashboardModal } from './components/select_dashboard_modal';
+import { SelectDashboardFlyout } from './components/select_dashboard_flyout';
 
 // Plugin IDs
 const alertsPluginID = 'alerting';
@@ -28,7 +28,7 @@ interface HomeProps extends RouteComponentProps {
   contentManagement: ContentManagementPluginStart;
 }
 
-let showModal: { (): void; (): void; (): void };
+let showFlyout: { (): void; (): void; (): void };
 const wrapper = {
   dashboardSelected: false,
 };
@@ -53,10 +53,10 @@ coreRefs.contentManagement?.registerContentProvider({
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
-          showModal={showModal}
+          showModal={showFlyout}
         />
       ) : (
-        <AddDashboardCallout showModal={showModal} />
+        <AddDashboardCallout showModal={showFlyout} />
       ),
   }),
   getTargetArea: () => HOME_CONTENT_AREAS.SELECTOR,
@@ -75,12 +75,12 @@ export const Home = ({ ..._props }: HomeProps) => {
   const homepage = coreRefs.contentManagement?.renderPage(HOME_PAGE_ID);
   const [_, setIsRegistered] = useState(false);
   const [dashboards, setDashboards] = useState<DashboardDictionary>({});
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   [startDate, setStartDate] = useState(moment().toISOString());
   [endDate, setEndDate] = useState(moment().toISOString());
   [dashboardTitle, setDashboardTitle] = useState('');
 
-  showModal = () => setIsModalVisible(true);
+  showFlyout = () => setIsFlyoutVisible(true);
 
   const navigateToApp = (appId: string, path: string) => {
     coreRefs?.application!.navigateToApp(appId, {
@@ -218,13 +218,12 @@ export const Home = ({ ..._props }: HomeProps) => {
     }
   }, [dashboards]);
 
-  const modal = isModalVisible && (
-    <SelectDashboardModal
-      closeModal={() => setIsModalVisible(false)}
+  const flyout = isFlyoutVisible && (
+    <SelectDashboardFlyout
+      closeFlyout={() => setIsFlyoutVisible(false)}
       wrapper={wrapper}
       dashboards={dashboards}
       registerDashboard={registerDashboard}
-      closeModalVisible={() => setIsModalVisible(false)}
     />
   );
 
@@ -234,7 +233,7 @@ export const Home = ({ ..._props }: HomeProps) => {
         <Switch>
           <Route exact path="/">
             {homepage}
-            {modal}
+            {flyout}
           </Route>
         </Switch>
       </HashRouter>
