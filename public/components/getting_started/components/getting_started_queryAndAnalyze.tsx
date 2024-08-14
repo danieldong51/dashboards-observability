@@ -17,7 +17,7 @@ import {
   EuiTitle,
 } from '@elastic/eui';
 import { coreRefs } from '../../../../public/framework/core_refs';
-import { fetchDashboardIds, fetchIndexPatternIds } from './utils';
+import { fetchDashboardIds, fetchIndexPatternIds, redirectToDashboards } from './utils';
 
 interface QueryAndAnalyzeProps {
   isOpen: boolean;
@@ -50,12 +50,6 @@ export const QueryAndAnalyze: React.FC<QueryAndAnalyzeProps> = ({
       console.error('Error fetching index patterns:', error);
       setDashboardsContent([]);
     }
-  };
-
-  const redirectToDashboards = (path: string) => {
-    coreRefs?.application!.navigateToApp('dashboards', {
-      path: `#/${path}`,
-    });
   };
 
   useEffect(() => {
