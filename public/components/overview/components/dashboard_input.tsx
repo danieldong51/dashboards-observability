@@ -6,6 +6,7 @@
 import { SimpleSavedObject } from '../../../../../../src/core/public';
 import { SavedObjectDashboard } from '../../../../../../src/plugins/dashboard/public';
 import { DashboardContainerInput } from '../../../../../../src/plugins/dashboard/public/application/embeddable/dashboard_container';
+import { ViewMode } from '../../../../../../src/plugins/embeddable/public';
 
 export const dashboardInput = (dashboardObject: SimpleSavedObject<SavedObjectDashboard>) => {
   const panels: DashboardContainerInput['panels'] = {};
@@ -38,7 +39,7 @@ export const dashboardInput = (dashboardObject: SimpleSavedObject<SavedObjectDas
     panels,
     id: 'id',
     title: '',
-    viewMode: 'view',
+    viewMode: ViewMode.VIEW,
     useMargins: true,
     isFullScreenMode: false,
     filters: [],

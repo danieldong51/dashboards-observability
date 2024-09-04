@@ -104,7 +104,6 @@ import { DataSourcePluggable } from './framework/datasource_pluggables/datasourc
 import { S3DataSource } from './framework/datasources/s3_datasource';
 import './index.scss';
 import { registerAllPluginNavGroups } from './plugin_helpers/plugin_nav';
-import { setupOverviewPage } from './plugin_helpers/plugin_overview';
 import DSLService from './services/requests/dsl';
 import PPLService from './services/requests/ppl';
 import SavedObjects from './services/saved_objects/event_analytics/saved_objects';
@@ -182,8 +181,6 @@ export class ObservabilityPlugin
     core.getStartServices().then(([coreStart]) => {
       setOSDSavedObjectsClient(coreStart.savedObjects.client);
     });
-
-    setupOverviewPage(setupDeps.contentManagement!);
 
     // redirect legacy notebooks URL to current URL under observability
     if (window.location.pathname.includes('notebooks-dashboards')) {
@@ -448,8 +445,7 @@ export class ObservabilityPlugin
     coreRefs.overlays = core.overlays;
     coreRefs.dataSource = startDeps.dataSource;
     coreRefs.navigation = startDeps.navigation;
-    coreRefs.contentManagement = startDeps.contentManagement;
-    coreRefs.embeddable = startDeps.embeddable;
+    coreRefs.dashboardStart = startDeps.dashboardStart;
 
     const { dataSourceService, dataSourceFactory } = startDeps.data.dataSources;
     dataSourceFactory.registerDataSourceType(S3_DATA_SOURCE_TYPE, S3DataSource);

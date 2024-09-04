@@ -17,12 +17,9 @@ import { DashboardStart } from '../../../../src/plugins/dashboard/public';
 import { DataSourcePluginStart } from '../../../../src/plugins/data_source/public';
 import PPLService from '../services/requests/ppl';
 import { NavigationPublicPluginStart } from '../../../../src/plugins/navigation/public';
-import { ContentManagementPluginStart } from '../../../../src/plugins/content_management/public';
-import { EmbeddableStart } from '../../../../src/plugins/embeddable/public';
 
 class CoreRefs {
   private static _instance: CoreRefs;
-
   public core?: CoreStart;
   public http?: HttpStart;
   public savedObjectsClient?: SavedObjectsClientContract;
@@ -38,8 +35,6 @@ class CoreRefs {
   public overlays?: OverlayStart;
   public dataSource?: DataSourcePluginStart;
   public navigation?: NavigationPublicPluginStart;
-  public contentManagement?: ContentManagementPluginStart;
-  public embeddable?: EmbeddableStart;
   private constructor() {
     // ...
   }

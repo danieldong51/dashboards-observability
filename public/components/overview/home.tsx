@@ -9,15 +9,18 @@ import { HashRouter, Route, Switch } from 'react-router-dom';
 import { DashboardSavedObjectsType } from '../../../common/types/overview';
 import { setNavBreadCrumbs } from '../../../common/utils/set_nav_bread_crumbs';
 import { coreRefs } from '../../framework/core_refs';
-import { HOME_CONTENT_AREAS } from '../../plugin_helpers/plugin_overview';
-import { DashboardControls } from './components/dashboard_controls';
 import { ObsDashboardStateManager } from './components/obs_dashboard_state_manager';
 import { SelectDashboardFlyout } from './components/select_dashboard_flyout';
-import { getObservabilityDashboardsId, setObservabilityDashboardsId } from './components/utils';
+import {
+  DashboardEmbeddableByValue,
+  getObservabilityDashboardsId,
+  setObservabilityDashboardsId,
+} from './components/utils';
 import './index.scss';
-import { EmbeddableInput, EmbeddableRenderer } from '../../../../../src/plugins/embeddable/public';
 import { dashboardInput } from './components/dashboard_input';
 import { Cards } from './components/cards';
+import { DashboardContainerInput } from '../../../../../src/plugins/dashboard/public';
+import { DashboardControls } from './components/dashboard_controls';
 
 export const Home = () => {
   const [dashboardsSavedObjects, setDashboardsSavedObjects] = useState<DashboardSavedObjectsType>(
@@ -25,19 +28,6 @@ export const Home = () => {
   );
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   ObsDashboardStateManager.showFlyout$.next(() => () => setIsFlyoutVisible(true));
-
-  const registerDashboardsControl = () => {
-    coreRefs.contentManagement?.registerContentProvider({
-      id: 'dashboards_controls',
-      getContent: () => ({
-        id: 'dashboards_controls',
-        kind: 'custom',
-        order: 1000,
-        render: () => <DashboardControls />,
-      }),
-      getTargetArea: () => HOME_CONTENT_AREAS.SELECTOR,
-    });
-  };
 
   const loadDashboardsState = () => {
     coreRefs.savedObjectsClient
@@ -99,7 +89,6 @@ export const Home = () => {
   );
 
   useEffect(() => {
-    registerDashboardsControl();
     loadDashboard();
   }, [dashboardsSavedObjects]);
 
@@ -117,7 +106,7 @@ export const Home = () => {
   }, []);
 
   const ref = useRef(false);
-  const [embeddable, setEmbeddable] = useState<EmbeddableInput | undefined>(undefined);
+  const [embeddable, setEmbeddable] = useState<DashboardContainerInput | undefined>(undefined);
 
   const loadDashboard = () => {
     ref.current = true;
@@ -148,10 +137,12 @@ export const Home = () => {
               <EuiPanel color="transparent" hasBorder={false}>
                 <DashboardControls />
               </EuiPanel>
-              {coreRefs.embeddable && embeddable && (
-                <EmbeddableRenderer
-                  factory={coreRefs.embeddable.getEmbeddableFactory('dashboard')}
-                  input={embeddable}
+              {coreRefs.dashboard && embeddable && (
+                <DashboardEmbeddableByValue
+                  DashboardContainerByValueRenderer={
+                    coreRefs.dashboard.DashboardContainerByValueRenderer
+                  }
+                  initialInput={embeddable}
                 />
               )}
               {flyout}
