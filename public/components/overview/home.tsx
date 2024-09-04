@@ -193,7 +193,13 @@ export const Home = () => {
         <Switch>
           <Route exact path="/">
             <div>
-              {homePage}
+              {homepage}
+              {coreRefs.embeddable && (
+                <coreRefs.embeddable.EmbeddablePanel
+                  embeddable={coreRefs.embeddable.getEmbeddableFactory('dashboard').create()}
+                />
+              )}
+
               {flyout}
             </div>
           </Route>

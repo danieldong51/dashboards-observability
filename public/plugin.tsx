@@ -449,6 +449,7 @@ export class ObservabilityPlugin
     coreRefs.dataSource = startDeps.dataSource;
     coreRefs.navigation = startDeps.navigation;
     coreRefs.contentManagement = startDeps.contentManagement;
+    coreRefs.embeddable = startDeps.embeddable;
 
     const { dataSourceService, dataSourceFactory } = startDeps.data.dataSources;
     dataSourceFactory.registerDataSourceType(S3_DATA_SOURCE_TYPE, S3DataSource);
