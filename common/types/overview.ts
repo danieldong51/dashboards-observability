@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SimpleSavedObject } from '../../../../src/core/public';
+import { SavedObjectDashboard } from '../../../../src/plugins/dashboard/public';
+
 export interface DashboardState {
   startDate: string;
   endDate: string;
@@ -16,5 +19,6 @@ export interface DashboardSavedObjectsType {
     label: string;
     startDate: string;
     endDate: string;
+    references: SimpleSavedObject<SavedObjectDashboard>;
   };
 }

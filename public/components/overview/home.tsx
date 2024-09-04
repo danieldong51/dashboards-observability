@@ -4,7 +4,7 @@
  */
 
 import { EuiText } from '@elastic/eui';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
 import { alertsPluginID, anomalyPluginID } from '../../../common/constants/overview';
 import { DashboardSavedObjectsType } from '../../../common/types/overview';
@@ -17,6 +17,8 @@ import { ObsDashboardStateManager } from './components/obs_dashboard_state_manag
 import { SelectDashboardFlyout } from './components/select_dashboard_flyout';
 import { getObservabilityDashboardsId, setObservabilityDashboardsId } from './components/utils';
 import './index.scss';
+import { EmbeddableInput, EmbeddableRenderer } from '../../../../../src/plugins/embeddable/public';
+import { dashboardInput } from './components/dashboard_input';
 
 export const Home = () => {
   const [homePage, setHomePage] = useState<ReactNode>(<></>);
@@ -81,22 +83,6 @@ export const Home = () => {
       });
   };
 
-  const registerDashboard = () => {
-    coreRefs.contentManagement?.registerContentProvider({
-      id: 'dashboard_content',
-      getContent: () => ({
-        id: 'dashboard_content',
-        kind: 'dashboard',
-        order: 1000,
-        input: {
-          kind: 'dynamic',
-          get: () => Promise.resolve(getObservabilityDashboardsId()),
-        },
-      }),
-      getTargetArea: () => HOME_CONTENT_AREAS.DASHBOARD,
-    });
-  };
-
   const registerDashboardsControl = () => {
     coreRefs.contentManagement?.registerContentProvider({
       id: 'dashboards_controls',
@@ -116,6 +102,7 @@ export const Home = () => {
         type: 'dashboard',
       })
       .then((response) => {
+        console.log(response);
         const savedDashboards = response.savedObjects.reduce((acc, savedDashboard) => {
           const dashboardAttributes = savedDashboard.attributes as {
             title: string;
@@ -128,6 +115,7 @@ export const Home = () => {
             label: dashboardAttributes.title,
             startDate: dashboardAttributes.timeFrom,
             endDate: dashboardAttributes.timeTo,
+            references: savedDashboard,
           };
           return acc;
         }, {} as DashboardSavedObjectsType);
@@ -169,9 +157,9 @@ export const Home = () => {
 
   useEffect(() => {
     registerCards();
-    registerDashboard();
     registerDashboardsControl();
     loadHomePage();
+    loadDashboard();
   }, [dashboardsSavedObjects]);
 
   useEffect(() => {
@@ -187,19 +175,53 @@ export const Home = () => {
     loadDashboardsState();
   }, []);
 
+  const ref = useRef(false);
+  const [embeddable, setEmbeddable] = useState<EmbeddableInput | undefined>(undefined);
+
+  const loadDashboard = () => {
+    ref.current = true;
+    if (!embeddable) {
+      const id = getObservabilityDashboardsId();
+      if (!dashboardsSavedObjects[id]) {
+        return;
+      }
+      console.log(id);
+      console.log(dashboardsSavedObjects[id]);
+
+      setEmbeddable(dashboardInput(dashboardsSavedObjects[id].references));
+
+      // @ts-ignore
+      // const promise = coreRefs.embeddable
+      //   ?.getEmbeddableFactory('dashboard')
+      //   .create(dashboardsSavedObjects[id].references);
+      //
+      // if (promise) {
+      //   promise.then((e) => {
+      //     console.log(e);
+      //     if (ref.current) {
+      //       setEmbeddable(e);
+      //     }
+      //   });
+      // }
+    }
+    return () => {
+      ref.current = false;
+    };
+  };
+
   return (
     <div>
       <HashRouter>
         <Switch>
           <Route exact path="/">
             <div>
-              {homepage}
-              {coreRefs.embeddable && (
-                <coreRefs.embeddable.EmbeddablePanel
-                  embeddable={coreRefs.embeddable.getEmbeddableFactory('dashboard').create()}
+              {homePage}
+              {coreRefs.embeddable && embeddable && (
+                <EmbeddableRenderer
+                  factory={coreRefs.embeddable.getEmbeddableFactory('dashboard')}
+                  input={embeddable}
                 />
               )}
-
               {flyout}
             </div>
           </Route>
