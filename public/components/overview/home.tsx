@@ -3,15 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EuiText } from '@elastic/eui';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { EuiPanel } from '@elastic/eui';
+import React, { useEffect, useRef, useState } from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
-import { alertsPluginID, anomalyPluginID } from '../../../common/constants/overview';
 import { DashboardSavedObjectsType } from '../../../common/types/overview';
 import { setNavBreadCrumbs } from '../../../common/utils/set_nav_bread_crumbs';
 import { coreRefs } from '../../framework/core_refs';
-import { HOME_CONTENT_AREAS, HOME_PAGE_ID } from '../../plugin_helpers/plugin_overview';
-import { cardConfigs, GettingStartedConfig } from './components/card_configs';
+import { HOME_CONTENT_AREAS } from '../../plugin_helpers/plugin_overview';
 import { DashboardControls } from './components/dashboard_controls';
 import { ObsDashboardStateManager } from './components/obs_dashboard_state_manager';
 import { SelectDashboardFlyout } from './components/select_dashboard_flyout';
@@ -19,69 +17,14 @@ import { getObservabilityDashboardsId, setObservabilityDashboardsId } from './co
 import './index.scss';
 import { EmbeddableInput, EmbeddableRenderer } from '../../../../../src/plugins/embeddable/public';
 import { dashboardInput } from './components/dashboard_input';
+import { Cards } from './components/cards';
 
 export const Home = () => {
-  const [homePage, setHomePage] = useState<ReactNode>(<></>);
   const [dashboardsSavedObjects, setDashboardsSavedObjects] = useState<DashboardSavedObjectsType>(
     {}
   );
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   ObsDashboardStateManager.showFlyout$.next(() => () => setIsFlyoutVisible(true));
-
-  const loadHomePage = () => {
-    setHomePage(coreRefs.contentManagement?.renderPage(HOME_PAGE_ID));
-  };
-
-  const registerCards = async () => {
-    let alertsPluginExists = false;
-    let anomalyPluginExists = false;
-    try {
-      const res = await coreRefs.http?.get('/api/status');
-      if (res) {
-        for (const status of res.status.statuses) {
-          if (status.id.includes(alertsPluginID)) {
-            alertsPluginExists = true;
-          }
-          if (status.id.includes(anomalyPluginID)) {
-            anomalyPluginExists = true;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking plugin installation status:', error);
-    }
-
-    cardConfigs
-      .filter((card) => {
-        if (card.id === 'alerts') {
-          return alertsPluginExists;
-        } else if (card.id === 'anomaly') {
-          return anomalyPluginExists;
-        }
-        return true;
-      })
-      .forEach((card: GettingStartedConfig) => {
-        coreRefs.contentManagement?.registerContentProvider({
-          id: card.id,
-          getContent: () => ({
-            id: card.id,
-            kind: 'card',
-            order: card.order,
-            description: card.description,
-            title: card.title,
-            onClick: () => coreRefs.application?.navigateToApp(card.url, { path: '#/' }),
-            getFooter: () => {
-              return (
-                <EuiText size="s" textAlign="center">
-                  {card.footer}
-                </EuiText>
-              );
-            },
-          }),
-          getTargetArea: () => HOME_CONTENT_AREAS.GET_STARTED,
-        });
-      });
-  };
 
   const registerDashboardsControl = () => {
     coreRefs.contentManagement?.registerContentProvider({
@@ -156,9 +99,7 @@ export const Home = () => {
   );
 
   useEffect(() => {
-    registerCards();
     registerDashboardsControl();
-    loadHomePage();
     loadDashboard();
   }, [dashboardsSavedObjects]);
 
@@ -189,20 +130,6 @@ export const Home = () => {
       console.log(dashboardsSavedObjects[id]);
 
       setEmbeddable(dashboardInput(dashboardsSavedObjects[id].references));
-
-      // @ts-ignore
-      // const promise = coreRefs.embeddable
-      //   ?.getEmbeddableFactory('dashboard')
-      //   .create(dashboardsSavedObjects[id].references);
-      //
-      // if (promise) {
-      //   promise.then((e) => {
-      //     console.log(e);
-      //     if (ref.current) {
-      //       setEmbeddable(e);
-      //     }
-      //   });
-      // }
     }
     return () => {
       ref.current = false;
@@ -215,7 +142,12 @@ export const Home = () => {
         <Switch>
           <Route exact path="/">
             <div>
-              {homePage}
+              <EuiPanel color="transparent" hasBorder={false}>
+                <Cards />
+              </EuiPanel>
+              <EuiPanel color="transparent" hasBorder={false}>
+                <DashboardControls />
+              </EuiPanel>
               {coreRefs.embeddable && embeddable && (
                 <EmbeddableRenderer
                   factory={coreRefs.embeddable.getEmbeddableFactory('dashboard')}
