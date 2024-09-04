@@ -241,6 +241,12 @@ export const Home = ({ ..._props }: HomeProps) => {
           <Route exact path="/">
             <div>
               {homepage}
+              {coreRefs.embeddable && (
+                <coreRefs.embeddable.EmbeddablePanel
+                  embeddable={coreRefs.embeddable.getEmbeddableFactory('dashboard').create()}
+                />
+              )}
+
               {flyout}
             </div>
           </Route>

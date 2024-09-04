@@ -19,6 +19,7 @@ import PPLService from '../services/requests/ppl';
 import { DataSourceStart } from '../../../../src/plugins/data/public/data_sources/datasource_services/types';
 import { NavigationPublicPluginStart } from '../../../../src/plugins/navigation/public';
 import { ContentManagementPluginStart } from '../../../../src/plugins/content_management/public';
+import { EmbeddableStart } from '../../../../src/plugins/embeddable/public';
 
 class CoreRefs {
   private static _instance: CoreRefs;
@@ -40,6 +41,7 @@ class CoreRefs {
   public dataSources?: DataSourceStart;
   public navigation?: NavigationPublicPluginStart;
   public contentManagement?: ContentManagementPluginStart;
+  public embeddable?: EmbeddableStart;
   private constructor() {
     // ...
   }
